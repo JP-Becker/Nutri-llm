@@ -31,7 +31,7 @@ export default function DietPlanner() {
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Create the initial prompt with the form data
+    // Prompt inicial com as infos do usuario
     const initialPrompt = `Por favor, crie uma dieta personalizada com base nas seguintes informações:
     - Peso: ${formData.weight} kg
     - Altura: ${formData.height} cm
@@ -41,7 +41,7 @@ export default function DietPlanner() {
     
     Por favor, forneça uma dieta detalhada com refeições para cada dia da semana, incluindo quantidades e horários.`
 
-    // Set the initial message
+    // setando a mensagem inicial
     setMessages([{ id: "1", role: "user", content: initialPrompt }])
 
     setFormSubmitted(true)
