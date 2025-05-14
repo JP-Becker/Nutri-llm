@@ -1,4 +1,4 @@
-import { agent } from './agent'
+import { agentExecutor } from './agent'
 import { HumanMessage } from '@langchain/core/messages'
 import { NextResponse } from 'next/server'
 
@@ -7,31 +7,27 @@ export async function POST(req: Request) {
     const body = await req.json()
     console.log('Body recebido:', body) 
 
-    if (!body.message) {
-      console.log('Body sem mensagem:', body) 
+    if (!body.input) {
       return NextResponse.json(
         { error: 'Mensagem não fornecida' },
         { status: 400 }
       )
     }
 
-    const result = await agent.invoke({
-      messages: [
-        new HumanMessage(body.message)
-      ]
+    const result = await agentExecutor.invoke({
+      input: body.input,
     })
 
     console.log('Resultado:', result)
 
-    if (!result.messages || result.messages.length === 0) {
+    if (!result.output) {
       return NextResponse.json(
         { error: 'Nenhuma resposta gerada' },
         { status: 500 }
       )
     }
 
-    const response = NextResponse.json({ response: result.messages[result.messages.length - 1].content })
-    return response
+    return NextResponse.json({ response: result.output })
   } catch (error) {
     console.error('Error:', error)
     return NextResponse.json(

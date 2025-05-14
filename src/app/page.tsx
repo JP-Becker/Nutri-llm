@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useChat } from "ai/react"
+import { useChat } from "@ai-sdk/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -22,13 +22,19 @@ export default function DietPlanner() {
     workoutsPerWeek: "",
   })
 
-  const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat()
+  const { messages, input, handleInputChange, handleSubmit, setMessages, isLoading } = useChat({
+    api: '/api/chat',
+    onError: (error) => {
+      console.error('Erro ao enviar mensagem:', error)
+      alert('Ocorreu um erro ao processar sua mensagem. Por favor, tente novamente.')
+    }
+  })
 
   const handleFormChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     // Prompt inicial com as infos do usuario
@@ -41,12 +47,32 @@ export default function DietPlanner() {
     
     Por favor, forneça uma dieta detalhada com refeições para cada dia da semana, incluindo quantidades e horários.`
 
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        input: initialPrompt
+      })
+    })
+  
+    console.log(response);
+    if (!response.ok) {
+      throw new Error('Erro ao enviar mensagem inicial')
+    }
+  
+    const data = await response.json()
+
     // setando a mensagem inicial
-    setMessages([{ id: "1", role: "user", content: initialPrompt }])
+    setMessages([{ id: "1", role: "user", content: initialPrompt }, 
+      { id: "2", role: "system", content: data.response }])
 
     setFormSubmitted(true)
+    
   }
 
+  console.log("Messages:",messages)
   return (
     <div className="flex flex-col min-h-screen bg-zinc-900 text-zinc-100">
       <header className="border-b border-zinc-800 p-4">
@@ -164,8 +190,9 @@ export default function DietPlanner() {
                 onChange={handleInputChange}
                 placeholder="Faça perguntas ou solicite ajustes na sua dieta..."
                 className="flex-1 bg-zinc-800 border-zinc-700"
+                disabled={isLoading}
               />
-              <Button type="submit" size="icon">
+              <Button type="submit" size="icon" disabled={isLoading}>
                 <Send size={18} />
               </Button>
             </form>
