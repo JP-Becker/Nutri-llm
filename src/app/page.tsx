@@ -20,14 +20,11 @@ export default function DietPlanner() {
     goal: "",
     dietaryRestrictions: "",
     workoutsPerWeek: "",
+    mealsPerDay: "",
   })
 
-  const { messages, input, handleInputChange, handleSubmit, setMessages, isLoading } = useChat({
-    api: '/api/chat',
-    onError: (error) => {
-      console.error('Erro ao enviar mensagem:', error)
-      alert('Ocorreu um erro ao processar sua mensagem. Por favor, tente novamente.')
-    }
+  const { messages, input, handleInputChange, setInput, handleSubmit, setMessages, isLoading } = useChat({
+   
   })
 
   const handleFormChange = (field: string, value: string) => {
@@ -42,8 +39,9 @@ export default function DietPlanner() {
     - Peso: ${formData.weight} kg
     - Altura: ${formData.height} cm
     - Objetivo: ${formData.goal}
-    - Restrições alimentares: ${formData.dietaryRestrictions || "Nenhuma"}
+    - Observações ou Restrições alimentares: ${formData.dietaryRestrictions || "Nenhuma"}
     - Número de treinos por semana: ${formData.workoutsPerWeek}
+    - Número de refeições desejadas na dieta por dia: ${formData.mealsPerDay}
     
     Por favor, forneça uma dieta detalhada com refeições para cada dia da semana, incluindo quantidades e horários.`
 
@@ -53,26 +51,75 @@ export default function DietPlanner() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        input: initialPrompt
+        messages: [
+          ...messages,
+          {
+            role: "user",
+            content: initialPrompt,
+            id: `user-${messages.length + 1}`
+          }
+        ]
       })
     })
   
-    console.log(response);
     if (!response.ok) {
       throw new Error('Erro ao enviar mensagem inicial')
     }
   
     const data = await response.json()
+    console.log("Data:",data)
 
     // setando a mensagem inicial
-    setMessages([{ id: "1", role: "user", content: initialPrompt }, 
-      { id: "2", role: "system", content: data.response }])
+    setMessages([{ id: "user-1", role: "user", content: initialPrompt}, 
+      { id: "assistant-1", role: "assistant", content: data.response }])
 
     setFormSubmitted(true)
     
   }
 
-  console.log("Messages:",messages)
+  const handleInputSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: [
+          ...messages,
+          {
+            role: "user",
+            content: input,
+            id: `user-${messages.length + 1}`
+          }
+        ]
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Erro ao enviar mensagem do user')
+    }
+
+    const data = await response.json()
+
+    setMessages([
+      ...messages,
+      { 
+        role: "user", 
+        content: input,
+        id: `user-${messages.length + 1}`
+      },
+      {
+        role: "assistant",
+        content: data.response,
+        id: `assistant-${messages.length + 2}`
+      }
+    ])
+
+    setInput('')
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-zinc-900 text-zinc-100">
       <header className="border-b border-zinc-800 p-4">
@@ -101,6 +148,8 @@ export default function DietPlanner() {
                       value={formData.weight}
                       onChange={(e) => handleFormChange("weight", e.target.value)}
                       required
+                      min={40}
+                      max={200}
                     />
                   </div>
 
@@ -114,6 +163,8 @@ export default function DietPlanner() {
                       value={formData.height}
                       onChange={(e) => handleFormChange("height", e.target.value)}
                       required
+                      min={100}
+                      max={220}
                     />
                   </div>
                 </div>
@@ -134,10 +185,10 @@ export default function DietPlanner() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="dietaryRestrictions">Restrições Alimentares</Label>
+                  <Label htmlFor="dietaryRestrictions">Observações sobre rotina/estilo de vida ou Restrições Alimentares</Label>
                   <Textarea
                     id="dietaryRestrictions"
-                    placeholder="Ex: Vegetariano, intolerância à lactose, alergia a amendoim..."
+                    placeholder="Ex: Trabalha no turno da noite, ingere muito álcool, é vegetariano ou vegano, etc..."
                     className="bg-zinc-950 border-zinc-700"
                     value={formData.dietaryRestrictions}
                     onChange={(e) => handleFormChange("dietaryRestrictions", e.target.value)}
@@ -155,6 +206,21 @@ export default function DietPlanner() {
                       <SelectItem value="1-2">1-2 vezes</SelectItem>
                       <SelectItem value="3-4">3-4 vezes</SelectItem>
                       <SelectItem value="5+">5 ou mais vezes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="mealsPerDay">Número de Refeições Desejadas na Dieta por Dia</Label>
+                  <Select onValueChange={(value) => handleFormChange("mealsPerDay", value)} required>
+                    <SelectTrigger className="bg-zinc-950 border-zinc-700">
+                      <SelectValue placeholder="Selecione o número de refeições" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-950 border-zinc-700">
+                      <SelectItem value="4">4 refeições</SelectItem>
+                      <SelectItem value="5">5 refeições</SelectItem>
+                      <SelectItem value="6">6 refeições</SelectItem>
+                      <SelectItem value="7">7 refeições</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -184,7 +250,7 @@ export default function DietPlanner() {
               ))}
             </div>
 
-            <form onSubmit={handleSubmit} className="flex gap-2">
+            <form onSubmit={handleInputSubmit} className="flex gap-2">
               <Input
                 value={input}
                 onChange={handleInputChange}

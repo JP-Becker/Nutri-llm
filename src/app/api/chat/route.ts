@@ -1,33 +1,66 @@
 import { agentExecutor } from './agent'
-import { HumanMessage } from '@langchain/core/messages'
+import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    console.log('Body recebido:', body) 
+    // console.log('Body recebido:', body)
+    console.log('Mensagens recebidas:', body.messages)
 
-    if (!body.input) {
+    if (!body.input && !body.messages) {
       return NextResponse.json(
         { error: 'Mensagem não fornecida' },
         { status: 400 }
       )
     }
 
-    const result = await agentExecutor.invoke({
-      input: body.input,
-    })
+    if (body.input && !body.messages) {
+      console.log('input recebido:', body.input)
+      const result = await agentExecutor.invoke({
+        messages: body.messages,
+      })
 
-    console.log('Resultado:', result)
+      console.log('Resultado:', result)
 
-    if (!result.output) {
-      return NextResponse.json(
-        { error: 'Nenhuma resposta gerada' },
-        { status: 500 }
-      )
+      if (!result.output) {
+        return NextResponse.json(
+          { error: 'Nenhuma resposta gerada' },
+          { status: 500 }
+        )
+      }
+
+      return NextResponse.json({ response: result.output })
     }
 
-    return NextResponse.json({ response: result.output })
+    if (body.messages) {
+      const lastMessage = body.messages[body.messages.length - 1]
+      const previousMessages = body.messages.slice(0, -1)
+    
+      const formattedMessages = previousMessages.map((msg: any) => {
+        if (msg.role === 'system') {
+          return new SystemMessage(msg.content)
+        } else if (msg.role === 'user') {
+          return new HumanMessage(msg.content)
+        } else {
+          return new AIMessage(msg.content)
+        }
+      })
+    
+      const result = await agentExecutor.invoke({
+        input: lastMessage.content,
+        chat_history: formattedMessages
+      })
+    
+      if (!result.output) {
+        return NextResponse.json(
+          { error: 'Nenhuma resposta gerada' },
+          { status: 500 }
+        )
+      }
+    
+      return NextResponse.json({ response: result.output })
+    }
   } catch (error) {
     console.error('Error:', error)
     return NextResponse.json(
