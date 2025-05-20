@@ -1,5 +1,4 @@
 import { agentExecutor } from './agent'
-import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
@@ -36,20 +35,13 @@ export async function POST(req: Request) {
     if (body.messages) {
       const lastMessage = body.messages[body.messages.length - 1]
       const previousMessages = body.messages.slice(0, -1)
-    
-      const formattedMessages = previousMessages.map((msg: any) => {
-        if (msg.role === 'system') {
-          return new SystemMessage(msg.content)
-        } else if (msg.role === 'user') {
-          return new HumanMessage(msg.content)
-        } else {
-          return new AIMessage(msg.content)
-        }
-      })
-    
+      
       const result = await agentExecutor.invoke({
         input: lastMessage.content,
-        chat_history: formattedMessages
+        chat_history: previousMessages.map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }))
       })
     
       if (!result.output) {

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Send, User, Bot } from "lucide-react"
-
+import { chatService } from "./services/chatService"
 export default function DietPlanner() {
   const [formSubmitted, setFormSubmitted] = useState(false)
   const [formData, setFormData] = useState({
@@ -45,31 +45,9 @@ export default function DietPlanner() {
     
     Por favor, forneça uma dieta detalhada com refeições para cada dia da semana, incluindo quantidades e horários.`
 
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messages: [
-          ...messages,
-          {
-            role: "user",
-            content: initialPrompt,
-            id: `user-${messages.length + 1}`
-          }
-        ]
-      })
-    })
-  
-    if (!response.ok) {
-      throw new Error('Erro ao enviar mensagem inicial')
-    }
-  
-    const data = await response.json()
-    console.log("Data:",data)
-
     // setando a mensagem inicial
+    const data = await chatService(messages, initialPrompt)
+
     setMessages([{ id: "user-1", role: "user", content: initialPrompt}, 
       { id: "assistant-1", role: "assistant", content: data.response }])
 
@@ -80,28 +58,7 @@ export default function DietPlanner() {
   const handleInputSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messages: [
-          ...messages,
-          {
-            role: "user",
-            content: input,
-            id: `user-${messages.length + 1}`
-          }
-        ]
-      })
-    })
-
-    if (!response.ok) {
-      throw new Error('Erro ao enviar mensagem do user')
-    }
-
-    const data = await response.json()
+    const data = await chatService(messages, input)
 
     setMessages([
       ...messages,
@@ -116,7 +73,6 @@ export default function DietPlanner() {
         id: `assistant-${messages.length + 2}`
       }
     ])
-
     setInput('')
   }
 

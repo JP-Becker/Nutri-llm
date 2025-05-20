@@ -1,0 +1,26 @@
+export const chatService = async (messages: any[], prompt: string) => {
+    const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+        messages: [
+            ...messages,
+            {
+            role: "user",
+            content: prompt,
+            id: `user-${messages.length + 1}`
+            }
+        ]
+        })
+    })
+
+    if (!response.ok) {
+        throw new Error('Erro ao enviar mensagem')
+    }
+
+    const data = await response.json()
+    console.log("Data:",data)
+    return data;
+}
