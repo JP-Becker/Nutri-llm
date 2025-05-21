@@ -21,6 +21,6 @@ export const chatService = async (messages: any[], prompt: string) => {
     }
 
     const data = await response.json()
-    console.log("Data:",data)
+    console.log("response:",response)
     return data;
 }

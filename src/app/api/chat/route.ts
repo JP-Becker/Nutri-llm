@@ -38,12 +38,13 @@ export async function POST(req: Request) {
       
       const result = await agentExecutor.invoke({
         input: lastMessage.content,
-        chat_history: previousMessages.map(msg => ({
+        chat_history: previousMessages.map((msg: { role: string; content: any }) => ({
           role: msg.role,
           content: msg.content
         }))
       })
-    
+      console.log('Resultado do agente:', result)
+
       if (!result.output) {
         return NextResponse.json(
           { error: 'Nenhuma resposta gerada' },

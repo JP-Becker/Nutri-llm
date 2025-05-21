@@ -12,6 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label"
 import { Send, User, Bot } from "lucide-react"
 import { chatService } from "./services/chatService"
+import ReactMarkdown from 'react-markdown'
+
 export default function DietPlanner() {
   const [formSubmitted, setFormSubmitted] = useState(false)
   const [formData, setFormData] = useState({
@@ -47,6 +49,7 @@ export default function DietPlanner() {
 
     // setando a mensagem inicial
     const data = await chatService(messages, initialPrompt)
+
 
     setMessages([{ id: "user-1", role: "user", content: initialPrompt}, 
       { id: "assistant-1", role: "assistant", content: data.response }])
@@ -199,7 +202,13 @@ export default function DietPlanner() {
                       {message.role === "user" ? <User size={18} /> : <Bot size={18} />}
                     </div>
                     <div className={`p-3 rounded-lg ${message.role === "user" ? "bg-green-700" : "bg-zinc-800"}`}>
-                      <div className="whitespace-pre-wrap">{message.content}</div>
+                      <div className="whitespace-pre-wrap">
+                      {message.role === "assistant" ? (
+      <ReactMarkdown>{message.content}</ReactMarkdown>
+    ) : (
+      message.content
+    )}
+                      </div>
                     </div>
                   </div>
                 </div>

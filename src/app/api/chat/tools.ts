@@ -1,20 +1,34 @@
 import { z } from "zod";
 import { tool } from "@langchain/core/tools";
+import { createPDF } from "@/app/utils/generatePdf";
+import { uploadPDFToStorage } from "@/app/utils/storage";
 
-const adderSchema = z.object({
-  a: z.number(),
-  b: z.number(),
+const pdfGeneratorSchema = z.object({
+  content: z.string().describe("Conteúdo completo da dieta"),
+  title: z.string().describe("Título do documento PDF")
 });
-const adderTool = tool(
+
+export const pdfGeneratorTool = tool(
   async (input): Promise<string> => {
-    const sum = input.a + input.b;
-    return `The sum of ${input.a} and ${input.b} is ${sum}`;
+    try {
+      console.log("Gerando PDF com:", input); // Para debug
+
+      const pdfBuffer = await createPDF(
+        input.content,
+        input.title
+      );
+
+      const pdfUrl = await uploadPDFToStorage(pdfBuffer);
+
+      return `PDF gerado com sucesso! Você pode acessar sua dieta em PDF através deste link: ${pdfUrl}`;
+    } catch (error: any) {
+      console.error("Erro ao gerar PDF:", error); // Para debug
+      return `Erro ao gerar PDF: ${error.message}`;
+    }
   },
   {
     name: "pdfGenerator",
-    description: "gera um pdf com a dieta",
-    schema: adderSchema,
+    description: "Gera um PDF formatado com a dieta personalizada. Deve ser chamado sempre após gerar uma dieta.",
+    schema: pdfGeneratorSchema,
   }
 );
-
-await adderTool.invoke({ a: 1, b: 2 });
