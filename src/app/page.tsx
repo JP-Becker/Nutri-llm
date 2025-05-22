@@ -76,7 +76,7 @@ export default function FitnessApp() {
     
     Por favor, forneça uma dieta detalhada com refeições para cada dia da semana, incluindo quantidades e horários.`
 
-    const data = await chatService(messages, initialPrompt) // Passando messages vazio na primeira chamada
+    const data = await chatService(messages, initialPrompt, userChoice) // Passando messages vazio na primeira chamada
     setMessages([{ id: "user-1", role: "user", content: initialPrompt}, 
       { id: "assistant-1", role: "assistant", content: data.response }])
     setCurrentScreen('chat')
@@ -96,7 +96,7 @@ export default function FitnessApp() {
 
     Por favor, forneça um plano de treino detalhado.`;
 
-    const data = await chatService(messages, initialPrompt); // Passando messages vazio na primeira chamada
+    const data = await chatService(messages, initialPrompt, userChoice); // Passando messages vazio na primeira chamada
     setMessages([{ id: "user-initial-workout", role: "user", content: initialPrompt },
                  { id: "assistant-initial-workout", role: "assistant", content: data.response }]);
     setCurrentScreen('chat');
@@ -120,7 +120,7 @@ export default function FitnessApp() {
     setInput(''); // Limpa o input após o envio
 
     // Chama o serviço de chat com todas as mensagens, incluindo a nova do usuário
-    const data = await chatService(updatedMessages, userMessageContent);
+    const data = await chatService(updatedMessages, userMessageContent, userChoice);
 
     // Adiciona a resposta do assistente
     setMessages(prevMessages => [

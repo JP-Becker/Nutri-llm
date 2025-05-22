@@ -1,4 +1,4 @@
-export const chatService = async (messages: any[], prompt: string) => {
+export const chatService = async (messages: any[], prompt: string, userChoice: string | null) => {
     const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -12,7 +12,8 @@ export const chatService = async (messages: any[], prompt: string) => {
             content: prompt,
             id: `user-${messages.length + 1}`
             }
-        ]
+        ],
+        userChoice: userChoice
         })
     })
 

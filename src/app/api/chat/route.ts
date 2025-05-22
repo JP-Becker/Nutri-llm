@@ -1,64 +1,73 @@
-import { agentExecutor } from './agent'
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server';
+import { AIMessage, HumanMessage } from "@langchain/core/messages";
+import { agentExecutorDiet } from './diet/dietAgent';
+import { agentExecutorWorkout } from './workout/workoutAgent';
+
+
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json()
-    // console.log('Body recebido:', body)
-    console.log('Mensagens recebidas:', body.messages)
+    const body = await req.json();
+    const { messages, userChoice, input: directInput } = body;
 
-    if (!body.input && !body.messages) {
-      return NextResponse.json(
-        { error: 'Mensagem não fornecida' },
-        { status: 400 }
-      )
+    let agentToUse;
+    let agentInputContent = directInput; 
+
+    if (!agentInputContent && messages && messages.length > 0) {
+      agentInputContent = messages[messages.length - 1].content;
     }
-
-    if (body.input && !body.messages) {
-      console.log('input recebido:', body.input)
-      const result = await agentExecutor.invoke({
-        messages: body.messages,
-      })
-
-      console.log('Resultado:', result)
-
-      if (!result.output) {
-        return NextResponse.json(
-          { error: 'Nenhuma resposta gerada' },
-          { status: 500 }
-        )
-      }
-
-      return NextResponse.json({ response: result.output })
-    }
-
-    if (body.messages) {
-      const lastMessage = body.messages[body.messages.length - 1]
-      const previousMessages = body.messages.slice(0, -1)
-      
-      const result = await agentExecutor.invoke({
-        input: lastMessage.content,
-        chat_history: previousMessages.map((msg: { role: string; content: any }) => ({
-          role: msg.role,
-          content: msg.content
-        }))
-      })
-      console.log('Resultado do agente:', result)
-
-      if (!result.output) {
-        return NextResponse.json(
-          { error: 'Nenhuma resposta gerada' },
-          { status: 500 }
-        )
-      }
     
-      return NextResponse.json({ response: result.output })
+    if (!agentInputContent) {
+      return NextResponse.json({ error: 'Conteúdo da mensagem não fornecido.' }, { status: 400 });
     }
-  } catch (error) {
-    console.error('Error:', error)
+
+    // Seleciona o agente com base no userChoice
+    if (userChoice === 'diet') {
+      agentToUse = agentExecutorDiet;
+    } else if (userChoice === 'workout') {
+      agentToUse = agentExecutorWorkout;
+    } else {
+      console.warn(`UserChoice não especificado ou inválido: ${userChoice}`);
+
+      return NextResponse.json(
+        { error: 'Tipo de assistência (dieta/treino) não especificado corretamente.' },
+        { status: 400 }
+      );
+    }
+
+    let chatHistoryForAgent = [];
+    if (messages && messages.length > 0) {
+        // Se directInput foi usado, 'messages' é o histórico. Se não, 'messages' contém o histórico + input atual.
+        const historySource = directInput ? messages : messages.slice(0, -1);
+        chatHistoryForAgent = historySource.map((msg: { role: string; content: any }) => {
+        if (msg.role === 'user') {
+          return new HumanMessage(msg.content);
+        } else if (msg.role === 'assistant') {
+          return new AIMessage(msg.content);
+        }
+        // Lidar com outros papéis ou retornar um tipo padrão
+        return new HumanMessage(msg.content); 
+      });
+    }
+    
+
+    const result = await agentToUse.invoke({
+      input: agentInputContent,
+      chat_history: chatHistoryForAgent,
+    });
+
+    if (!result || typeof result.output === 'undefined') {
+      console.error('Resposta inesperada do agente:', result);
+      return NextResponse.json({ error: 'Nenhuma resposta gerada ou formato inválido.' }, { status: 500 });
+    }
+
+    return NextResponse.json({ response: result.output });
+
+  } catch (error: any) {
+    console.error('Erro na API /api/chat:', error);
     return NextResponse.json(
-      { error: 'Erro ao processar a requisição' },
+      { error: 'Erro ao processar a requisição', details: error.message },
       { status: 500 }
-    )
+    );
   }
 }
