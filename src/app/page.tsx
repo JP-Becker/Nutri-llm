@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Send, User, Bot, Dumbbell, Apple } from "lucide-react"
 import { chatService } from "./services/chatService"
 import ReactMarkdown from 'react-markdown'
+import { LoadingSpinner, LoadingOverlay } from "@/components/ui/loadingSpinner"
 
 type Screen = 'welcome' | 'dietForm' | 'workoutForm' | 'chat'
 type UserChoice = 'diet' | 'workout' | null
@@ -20,6 +21,8 @@ type UserChoice = 'diet' | 'workout' | null
 export default function FitnessApp() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('welcome')
   const [userChoice, setUserChoice] = useState<UserChoice>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
+
 
   const [formDataDiet, setFormDataDiet] = useState({
     weight: "",
@@ -65,26 +68,37 @@ export default function FitnessApp() {
 
   const handleDietFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsGenerating(true)
 
-    const initialPrompt = `Por favor, crie uma dieta personalizada com base nas seguintes informações:
-    - Peso: ${formDataDiet.weight} kg
-    - Altura: ${formDataDiet.height} cm
-    - Objetivo: ${formDataDiet.goal}
-    - Observações ou Restrições alimentares: ${formDataDiet.dietaryRestrictions || "Nenhuma"}
-    - Número de treinos por semana: ${formDataDiet.workoutsPerWeek}
-    - Número de refeições desejadas na dieta por dia: ${formDataDiet.mealsPerDay}
-    
-    Por favor, forneça uma dieta detalhada com refeições para cada dia da semana, incluindo quantidades e horários.`
-
-    const data = await chatService(messages, initialPrompt, userChoice) // Passando messages vazio na primeira chamada
-    setMessages([{ id: "user-1", role: "user", content: initialPrompt}, 
-      { id: "assistant-1", role: "assistant", content: data.response }])
-    setCurrentScreen('chat')
+    try {
+      const initialPrompt = `Por favor, crie uma dieta personalizada com base nas seguintes informações:
+      - Peso: ${formDataDiet.weight} kg
+      - Altura: ${formDataDiet.height} cm
+      - Objetivo: ${formDataDiet.goal}
+      - Observações ou Restrições alimentares: ${formDataDiet.dietaryRestrictions || "Nenhuma"}
+      - Número de treinos por semana: ${formDataDiet.workoutsPerWeek}
+      - Número de refeições desejadas na dieta por dia: ${formDataDiet.mealsPerDay}
+      
+      Por favor, forneça uma dieta detalhada com refeições para cada dia da semana, incluindo quantidades e horários.`
+  
+      const data = await chatService(messages, initialPrompt, userChoice)
+      setMessages([
+        { id: "user-1", role: "user", content: initialPrompt}, 
+        { id: "assistant-1", role: "assistant", content: data.response }
+      ])
+      setCurrentScreen('chat')
+    } catch (error) {
+      console.error('Erro ao gerar dieta:', error)
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const handleWorkoutFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Prompt para treino será construído aqui
+    setIsGenerating(true)
+
+  try {
     const initialPrompt = `Por favor, crie um plano de treino personalizado com base nas seguintes informações:
     - Objetivo principal: ${formDataWorkout.mainGoal}
     - Nível de experiência: ${formDataWorkout.experienceLevel}
@@ -94,12 +108,19 @@ export default function FitnessApp() {
     - Grupos musculares que deseja focar: ${formDataWorkout.focusMuscleGroups || "Nenhum específico"}
     - Outras observações: ${formDataWorkout.otherObservations || "Nenhuma"}
 
-    Por favor, forneça um plano de treino detalhado.`;
+    Por favor, forneça um plano de treino detalhado.`
 
-    const data = await chatService(messages, initialPrompt, userChoice); // Passando messages vazio na primeira chamada
-    setMessages([{ id: "user-initial-workout", role: "user", content: initialPrompt },
-                 { id: "assistant-initial-workout", role: "assistant", content: data.response }]);
-    setCurrentScreen('chat');
+    const data = await chatService(messages, initialPrompt, userChoice)
+    setMessages([
+      { id: "user-initial-workout", role: "user", content: initialPrompt },
+      { id: "assistant-initial-workout", role: "assistant", content: data.response }
+    ])
+    setCurrentScreen('chat')
+  } catch (error) {
+    console.error('Erro ao gerar treino:', error)
+  } finally {
+    setIsGenerating(false)
+  }
 };
 
 
@@ -107,9 +128,8 @@ export default function FitnessApp() {
     e.preventDefault() // Prevenir o comportamento padrão do formulário
     // Usar o input atual para a nova mensagem do usuário
     const userMessageContent = input; 
-    if (!userMessageContent.trim()) return; // Não enviar mensagens vazias
+    if (!userMessageContent.trim()) return; 
 
-    // Adiciona a mensagem do usuário otimisticamente
     const newUserMessage = { 
       id: `user-${messages.length + 1}`, 
       role: 'user' as const, 
@@ -117,9 +137,8 @@ export default function FitnessApp() {
     };
     const updatedMessages = [...messages, newUserMessage];
     setMessages(updatedMessages);
-    setInput(''); // Limpa o input após o envio
+    setInput(''); 
 
-    // Chama o serviço de chat com todas as mensagens, incluindo a nova do usuário
     const data = await chatService(updatedMessages, userMessageContent, userChoice);
 
     // Adiciona a resposta do assistente
@@ -284,8 +303,8 @@ export default function FitnessApp() {
                   </Select>
                 </div>
 
-                <Button type="submit" className="w-full">
-                  Gerar Dieta
+                <Button type="submit" className="w-full" disabled={isGenerating}>
+                {isGenerating ? "Gerando Dieta..." : "Gerar Dieta"}
                 </Button>
               </form>
             </CardContent>
@@ -365,7 +384,7 @@ export default function FitnessApp() {
 
                 {/* Restrições Físicas ou Lesões */}
                 <div className="space-y-2">
-                  <Label htmlFor="physicalRestrictions">Restrições Físicas ou Lesões</Label>
+                  <Label htmlFor="physicalRestrictions">Restrições Físicas ou Lesões (Opcional)</Label>
                   <Textarea
                     id="physicalRestrictions"
                     placeholder="Ex: Dor no joelho, hérnia de disco, etc."
@@ -400,8 +419,8 @@ export default function FitnessApp() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full">
-                  Gerar Treino
+                <Button type="submit" className="w-full" disabled={isGenerating}>
+                {isGenerating ? "Gerando Treino..." : "Gerar Treino"}
                 </Button>
               </form>
             </CardContent>
@@ -448,6 +467,10 @@ export default function FitnessApp() {
           </>
         )}
       </main>
+      <LoadingOverlay 
+        isVisible={isGenerating} 
+        message={userChoice === 'diet' ? "Criando sua dieta personalizada..." : "Criando seu treino personalizado..."}
+      />
     </div>
   )
 }
