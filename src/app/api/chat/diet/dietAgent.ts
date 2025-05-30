@@ -33,6 +33,7 @@ const dietPrompt = ChatPromptTemplate.fromMessages([
 
     IMPORTANTE: 
     - Você DEVE SEMPRE gerar o PDF após criar a dieta.
+    - Você DEVE SEMPRE avisar que link o link do PDF expira em 24 horas.
     - Use a tool 'pdfGenerator' com os parâmetros content (conteúdo da dieta) e title (título do documento).
     - Não inclua exemplos de código ou formatação JSON na sua resposta.
     - Apenas gere a dieta e use a tool para criar o PDF.

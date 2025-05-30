@@ -34,6 +34,8 @@ const workoutPrompt = ChatPromptTemplate.fromMessages([
     5. Manter um tom profissional, motivador e encorajador.
 
     IMPORTANTE:
+    - Você DEVE SEMPRE gerar o PDF após criar o treino.
+    - Você DEVE SEMPRE avisar que link o link do PDF expira em 24 horas.
     - Detalhe os exercícios, séries, repetições e tempos de descanso.
     - Adapte o treino ao nível de experiência, objetivos e restrições fornecidas pelo usuário.
     - Se usar a 'pdfGenerator', passe o conteúdo do treino e um título adequado.

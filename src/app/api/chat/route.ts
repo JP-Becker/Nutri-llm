@@ -2,22 +2,22 @@ import { NextResponse } from 'next/server';
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { agentExecutorDiet } from './diet/dietAgent';
 import { agentExecutorWorkout } from './workout/workoutAgent';
-import { checkRateLimit, createClientFingerprint } from '@/app/utils/rateLimiter';
+import { checkPDFRateLimit, checkRateLimit, createClientFingerprint, isIPBlocked } from '@/app/utils/rateLimiter';
 import { chatRequestSchema, sanitizeInput } from '@/lib/validation';
 
 export async function POST(req: Request) {
   try {
-    const clientFingerprint = createClientFingerprint(req);
+    const fingerprint = createClientFingerprint(req);
+
+    if (isIPBlocked(fingerprint)) { // ~0.1ms
+      return NextResponse.json({ error: 'IP bloqueado' }, { status: 429 });
+    }
     
-    // Verifica rate limit
-    const rateLimitResult = checkRateLimit(clientFingerprint, 50, 3600000);
+    const rateResult = checkPDFRateLimit(fingerprint, req);
     
-    if (!rateLimitResult) {
+    if (!rateResult.allowed) {
       return NextResponse.json(
-        { 
-          error: 'Limite de criação de PDFs atingido. Você pode gerar no máximo 5 PDFs por hora. Tente novamente mais tarde.',
-          rateLimitExceeded: true
-        }, 
+        { error: rateResult.error || 'Limite de criação de PDFs atingido' },
         { status: 429 }
       );
     }
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     
     if (!validationResult.success) {
       console.warn('Validação falhou:', {
-        fingerprint: clientFingerprint,
+        fingerprint: fingerprint,
         errors: validationResult.error.errors,
         receivedData: body
       });
@@ -56,7 +56,6 @@ export async function POST(req: Request) {
     }
     const { messages, userChoice, input: directInput } = validationResult.data;
     
-    // const { messages, userChoice, input: directInput } = body;
 
     let agentToUse;
     let agentInputContent = directInput; 
