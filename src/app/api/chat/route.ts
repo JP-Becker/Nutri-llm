@@ -3,6 +3,7 @@ import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { agentExecutorDiet } from './diet/dietAgent';
 import { agentExecutorWorkout } from './workout/workoutAgent';
 import { checkRateLimit, createClientFingerprint } from '@/app/utils/rateLimiter';
+import { chatRequestSchema, sanitizeInput } from '@/lib/validation';
 
 export async function POST(req: Request) {
   try {
@@ -21,8 +22,41 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.json();
-    const { messages, userChoice, input: directInput } = body;
+    let body;
+    try {
+      body = await req.json();
+    } catch (parseError) {
+      console.warn('Erro ao fazer parse do JSON:', parseError);
+      return NextResponse.json(
+        { error: 'Formato JSON inválido' },
+        { status: 400 }
+      );
+    }
+    // const body = await req.json();
+
+    const validationResult = chatRequestSchema.safeParse(body);
+    
+    if (!validationResult.success) {
+      console.warn('Validação falhou:', {
+        fingerprint: clientFingerprint,
+        errors: validationResult.error.errors,
+        receivedData: body
+      });
+      
+      return NextResponse.json(
+        { 
+          error: 'Dados inválidos fornecidos',
+          details: validationResult.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        }, 
+        { status: 400 }
+      );
+    }
+    const { messages, userChoice, input: directInput } = validationResult.data;
+    
+    // const { messages, userChoice, input: directInput } = body;
 
     let agentToUse;
     let agentInputContent = directInput; 
@@ -49,7 +83,7 @@ export async function POST(req: Request) {
       );
     }
 
-    let chatHistoryForAgent = [];
+    let chatHistoryForAgent: (HumanMessage | AIMessage)[] = [];
     if (messages && messages.length > 0) {
         // Se directInput foi usado, 'messages' é o histórico. Se não, 'messages' contém o histórico + input atual.
         const historySource = directInput ? messages : messages.slice(0, -1);
@@ -75,7 +109,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Nenhuma resposta gerada ou formato inválido.' }, { status: 500 });
     }
 
-    return NextResponse.json({ response: result.output });
+    if (typeof result.output !== 'string') {
+      console.error('Tipo de resposta inválido do agente:', typeof result.output);
+      return NextResponse.json(
+        { error: 'Formato de resposta inválido.' }, 
+        { status: 500 }
+      );
+    }
+
+    const sanitizedResponse = sanitizeInput(result.output);
+
+    return NextResponse.json({ response: sanitizedResponse });
 
   } catch (error: any) {
     console.error('Erro na API /api/chat:', error);

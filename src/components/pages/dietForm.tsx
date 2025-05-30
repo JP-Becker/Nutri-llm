@@ -87,7 +87,7 @@ export function DietForm({ formData, onFormChange, onSubmit, isGenerating }: Die
 
           {/* Observações sobre rotina/estilo de vida ou Restrições Alimentares */}
           <div className="space-y-2">
-            <Label htmlFor="dietaryRestrictions">Observações sobre rotina/estilo de vida ou Restrições Alimentares</Label>
+            <Label htmlFor="dietaryRestrictions">Observações sobre rotina/estilo de vida ou Restrições Alimentares (Opcional)</Label>
             <Textarea
               id="dietaryRestrictions"
               placeholder="Ex: Trabalha no turno da noite, ingere muito álcool, é vegetariano ou vegano, etc..."
