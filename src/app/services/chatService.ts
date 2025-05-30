@@ -1,4 +1,4 @@
-export const chatService = async (messages: any[], prompt: string, userChoice: string | null) => {
+export const chatService = async (messages: { role: string; content: string }[], prompt: string, userChoice: string | null) => {
     const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {

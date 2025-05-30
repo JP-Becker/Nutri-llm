@@ -21,9 +21,9 @@ export const pdfGeneratorTool = tool(
       const pdfUrl = await uploadPDFToStorage(pdfBuffer);
 
       return `PDF gerado com sucesso! Você pode acessar sua dieta em PDF através deste link: ${pdfUrl}`;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao gerar PDF:", error);
-      return `Erro ao gerar PDF: ${error.message}`;
+      return `Erro ao gerar PDF: ${error instanceof Error ? error.message : 'Erro desconhecido'}`;
     }
   },
   {

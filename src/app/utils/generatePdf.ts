@@ -1,5 +1,4 @@
 import { jsPDF } from 'jspdf';
-import { createClientFingerprint } from './rateLimiter';
 
     export async function createPDF(content: string, title: string): Promise<Buffer> {
         try {

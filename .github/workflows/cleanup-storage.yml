@@ -1,0 +1,29 @@
+name: Cleanup Storage
+
+on:
+  schedule:
+    # Executa todo dia às 3:00 AM UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch: # Permite execução manual
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Cleanup Storage
+        run: |
+          response=$(curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.CLEANUP_SECRET_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.APP_URL }}/api/cleanup-storage")
+          
+          echo "Cleanup response: $response"
+          
+          # Verifica se houve erro
+          if echo "$response" | grep -q '"error"'; then
+            echo "❌ Erro na limpeza automática"
+            exit 1
+          else
+            echo "✅ Limpeza executada com sucesso"
+          fi 

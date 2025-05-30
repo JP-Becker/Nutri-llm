@@ -1,7 +1,7 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { AgentExecutor, createToolCallingAgent } from "langchain/agents";
 import { TavilySearch } from "@langchain/tavily";
-import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { pdfGeneratorTool } from "../tools";
 
 const dietPrompt = ChatPromptTemplate.fromMessages([

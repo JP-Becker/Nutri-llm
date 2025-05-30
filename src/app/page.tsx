@@ -38,7 +38,7 @@ export default function FitnessApp() {
     otherObservations: "",
   })
 
-  const { messages, input, handleInputChange, setInput, handleSubmit: handleChatSubmitHook, setMessages, isLoading } = useChat({
+  const { messages, input, handleInputChange, setInput, setMessages, isLoading } = useChat({
     
   })
 

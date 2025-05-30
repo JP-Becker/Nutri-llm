@@ -8,7 +8,7 @@ const supabase = createClient(
 export async function uploadPDFToStorage(pdfBuffer: Buffer): Promise<string> {
   const fileName = `dietas/${Date.now()}-${Math.random().toString(36).substring(7)}.pdf`;
   
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from('dietas')
     .upload(fileName, pdfBuffer, {
       contentType: 'application/pdf'
