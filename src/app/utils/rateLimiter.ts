@@ -11,7 +11,7 @@ export function createClientFingerprint(req: Request): string {
              'unknown';
   const userAgent = req.headers.get('user-agent') || 'unknown';
   
-  // Criar hash simples do fingerprint
+  // Cria hash simples do fingerprint
   const fingerprint = `${ip}-${userAgent.slice(0, 50)}`;
   return Buffer.from(fingerprint).toString('base64').slice(0, 32);
 }
