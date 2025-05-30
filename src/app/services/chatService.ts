@@ -17,11 +17,15 @@ export const chatService = async (messages: any[], prompt: string, userChoice: s
         })
     })
 
-    if (!response.ok) {
-        throw new Error('Erro ao enviar mensagem')
+    const data = await response.json();
+    
+    if (response.status === 429) {
+      throw new Error(data.error || 'Limite de PDFs atingido. Tente novamente mais tarde.');
     }
-
-    const data = await response.json()
-    console.log("response:",response)
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Erro na requisição');
+    }
+    
     return data;
 }

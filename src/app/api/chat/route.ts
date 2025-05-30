@@ -2,11 +2,25 @@ import { NextResponse } from 'next/server';
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { agentExecutorDiet } from './diet/dietAgent';
 import { agentExecutorWorkout } from './workout/workoutAgent';
-
-
+import { checkRateLimit, createClientFingerprint } from '@/app/utils/rateLimiter';
 
 export async function POST(req: Request) {
   try {
+    const clientFingerprint = createClientFingerprint(req);
+    
+    // Verifica rate limit
+    const rateLimitResult = checkRateLimit(clientFingerprint, 50, 3600000);
+    
+    if (!rateLimitResult) {
+      return NextResponse.json(
+        { 
+          error: 'Limite de criação de PDFs atingido. Você pode gerar no máximo 5 PDFs por hora. Tente novamente mais tarde.',
+          rateLimitExceeded: true
+        }, 
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { messages, userChoice, input: directInput } = body;
 

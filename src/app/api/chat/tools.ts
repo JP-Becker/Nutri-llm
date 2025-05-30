@@ -11,7 +11,7 @@ const pdfGeneratorSchema = z.object({
 export const pdfGeneratorTool = tool(
   async (input): Promise<string> => {
     try {
-      console.log("Gerando PDF com:", input); // Para debug
+      console.log("Gerando PDF com:", input);
 
       const pdfBuffer = await createPDF(
         input.content,
@@ -22,7 +22,7 @@ export const pdfGeneratorTool = tool(
 
       return `PDF gerado com sucesso! Você pode acessar sua dieta em PDF através deste link: ${pdfUrl}`;
     } catch (error: any) {
-      console.error("Erro ao gerar PDF:", error); // Para debug
+      console.error("Erro ao gerar PDF:", error);
       return `Erro ao gerar PDF: ${error.message}`;
     }
   },

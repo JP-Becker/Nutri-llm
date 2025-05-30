@@ -19,7 +19,6 @@ export default function FitnessApp() {
   const [userChoice, setUserChoice] = useState<UserChoice>(null)
   const [isGenerating, setIsGenerating] = useState(false)
 
-
   const [formDataDiet, setFormDataDiet] = useState({
     weight: "",
     height: "",
@@ -59,6 +58,8 @@ export default function FitnessApp() {
       setCurrentScreen('workoutForm')
     }
   }
+
+  
 
   const handleDietFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -145,7 +146,6 @@ export default function FitnessApp() {
       }
     ]);
   }
-
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-900 text-zinc-100">
