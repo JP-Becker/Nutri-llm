@@ -5,7 +5,7 @@ Interface em Next.js/TypeScript para criar dietas e planos de treino personaliza
 O app guia o usuário por uma tela de boas-vindas, um formulário (dieta ou treino) e um chat para refinamentos. No backend, endpoints server-side recebem os dados, selecionam o agente adequado (nutrição/treino), executam ferramentas (busca web e geração de PDF) e retornam o resultado sanitizado.
 
 ## Link para o projeto:
--  llm-fitness.vercel.app
+`[Link do projeto](https://llm-fitness.vercel.app/)`
 
 ## Tecnologias Principais
 - **Next.js 15**
